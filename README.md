@@ -21,4 +21,8 @@ Web-страница курса: https://mzym.susu.ru/courses/tsm/.
 
 * _datasets_	Наборы данных для выполнения практических заданий
 * _slides_	Слайды к лекциям курса
+<<<<<<< Updated upstream
 * _practice_	Практические задания
+=======
+* _practice_	Практические задания
+>>>>>>> Stashed changes
