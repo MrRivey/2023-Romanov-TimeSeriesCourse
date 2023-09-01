@@ -4,7 +4,6 @@ import random
 
 
 def z_normalize(ts):
-
     """
     Calculate the z-normalized time series by subtracting the mean and
     dividing by the standard deviation along a given axis.

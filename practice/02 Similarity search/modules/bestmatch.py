@@ -6,8 +6,31 @@ from modules.metrics import *
 
 
 class BestMatchFinder:
+    """
+    Base Best Match Finder.
+    
+    Parameters
+    ----------
+    query : numpy.ndarrray
+        Query.
+    
+    ts_data : numpy.ndarrray
+        Time series.
+    
+    excl_zone_denom : float, default = 1
+        The exclusion zone.
+    
+    top_k : int, default = 3
+        Count of the best match subsequences.
+    
+    normalize : bool, default = True
+        Z-normalize or not subsequences before computing distances.
+    
+    r : float, default = 0.05
+        Warping window size.
+    """
 
-    def __init__(self, ts_data=None, query=None, exclusion_zone=None, top_k=3, normalize=True, r=0.05):
+    def __init__(self, ts_data, query, exclusion_zone=1, top_k=3, normalize=True, r=0.05):
 
         self.query = copy.deepcopy(np.array(query))
         if (len(ts_data.shape) == 2): # time series set
@@ -22,7 +45,26 @@ class BestMatchFinder:
 
 
     def _apply_exclusion_zone(self, a, idx, excl_zone):
-
+        """
+        Apply an exclusion zone to an array (inplace).
+        
+        Parameters
+        ----------
+        a : numpy.ndarrray
+            The array to apply the exclusion zone to.
+        
+        idx : int
+            The index around which the window should be centered.
+        
+        excl_zone : int
+            Size of the exclusion zone.
+        
+        Returns
+        -------
+        a: numpy.ndarrray
+            The array which is applied the exclusion zone.
+        """
+        
         zone_start = max(0, idx - excl_zone)
         zone_stop = min(a.shape[-1], idx + excl_zone)
         a[zone_start : zone_stop + 1] = np.inf
@@ -31,7 +73,29 @@ class BestMatchFinder:
 
 
     def _top_k_match(self, distances, m, bsf, excl_zone):
-
+        """
+        Find the top-k match subsequences.
+        
+        Parameters
+        ----------
+        distances : list
+            Distances between query and subsequences of time series.
+        
+        m : int
+            Subsequence length.
+        
+        bsf : float
+            Best-so-far.
+        
+        excl_zone : int
+            Size of the exclusion zone.
+        
+        Returns
+        -------
+        best_match_results: dict
+            Dictionary containing results of algorithm.
+        """
+        
         data_len = len(distances)
         top_k_match = []
 
@@ -60,25 +124,63 @@ class BestMatchFinder:
 
 
 class NaiveBestMatchFinder(BestMatchFinder):
-
+    """
+    Naive Best Match Finder.
+    """
+    
     def __init__(self, ts=None, query=None, exclusion_zone=1, top_k=3, normalize=True, r=0.05):
         super().__init__(ts, query, exclusion_zone, top_k, normalize, r)
 
 
     def perform(self):
-
+        """
+        Perform the best match finder using the naive algorithm.
+        
+        Returns
+        -------
+        best_match_results: dict
+            Dictionary containing results of the naive algorithm.
+        """
+        N, m = self.ts_data.shape
+        
+        bsf = float("inf")
+        
+        if (self.excl_zone_denom is None):
+            excl_zone = 0
+        else:
+            excl_zone = int(np.ceil(m / self.excl_zone_denom))
+        
         # INSERT YOUR CODE
 
         return self.bestmatch
 
 
 class UCR_DTW(BestMatchFinder):
-
-    def __init__(self, ts=None, query=None, exclusion_zone=None, top_k=3, normalize=True, r=0.05):
+    """
+    UCR-DTW Match Finder.
+    """
+    
+    def __init__(self, ts=None, query=None, exclusion_zone=1, top_k=3, normalize=True, r=0.05):
         super().__init__(ts, query, exclusion_zone, top_k, normalize, r)
 
 
     def _LB_Kim(self, subs1, subs2):
+        """
+        Compute LB_Kim lower bound between two subsequences.
+        
+        Parameters
+        ----------
+        subs1 : numpy.ndarrray
+            The first subsequence.
+        
+        subs2 : numpy.ndarrray
+            The second subsequence.
+        
+        Returns
+        -------
+        lb_Kim : float
+            LB_Kim lower bound.
+        """
 
         lb_Kim = 0
 
@@ -88,7 +190,26 @@ class UCR_DTW(BestMatchFinder):
 
 
     def _LB_Keogh(self, subs1, subs2, r):
-
+        """
+        Compute LB_Keogh lower bound between two subsequences.
+        
+        Parameters
+        ----------
+        subs1 : numpy.ndarrray
+            The first subsequence.
+        
+        subs2 : numpy.ndarrray
+            The second subsequence.
+        
+        r : float
+            Warping window size.
+        
+        Returns
+        -------
+        lb_Keogh : float
+            LB_Keogh lower bound.
+        """
+        
         lb_Keogh = 0
 
         # INSERT YOUR CODE
@@ -97,7 +218,23 @@ class UCR_DTW(BestMatchFinder):
 
 
     def perform(self):
-
+        """
+        Perform the best match finder using UCR-DTW algorithm.
+        
+        Returns
+        -------
+        best_match_results: dict
+            Dictionary containing results of UCR-DTW algorithm.
+        """
+        N, m = self.ts_data.shape
+        
+        bsf = float("inf")
+        
+        if (self.excl_zone_denom is None):
+            excl_zone = 0
+        else:
+            excl_zone = int(np.ceil(m / self.excl_zone_denom))
+        
         self.lb_Kim_num = 0
         self.lb_KeoghQC_num = 0
         self.lb_KeoghCQ_num = 0
